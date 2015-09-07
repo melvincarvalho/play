@@ -1,0 +1,154 @@
+<html>
+<head>
+  <title>Vega Experiment: jobs with filters</title>
+  <script src="http://vega.github.io/vega-editor/vendor/d3.min.js"></script>
+  <script src="http://vega.github.io/vega/vega.min.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+</head>
+<body>
+  <div id="vis"></div>
+
+  <script type="text/javascript">
+  //vg.debug.enable = true;
+
+  function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+    results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
+
+  var description = getParameterByName('description') || 'desktop';
+  var api = getParameterByName('api') || 'http://klaranet/wallet/tmp/api/';
+  var user = getParameterByName('user') || 'http://melvincarvalho.com/#me';
+
+  $.getJSON( api +  'v1/days.php?uri=' + encodeURIComponent(user) + '&description=' + encodeURIComponent(description), function( data ) {
+    var items = [];
+    var values = [];
+    var latest = [];
+    //var sorted = data.sort(function(a,b){return parseInt(a[1]) > parseInt(b[1]);});
+    var sorted = [];
+    var last = 0;
+    $.each( data, function( key, val ) {
+      values.push({"x" : val[0].substr(5,5), "y" : val[1]});
+      sorted.push(val[1]);
+      last = val[1];
+    });
+
+
+    sorted.sort(function(a,b){return b-a;});
+    var i = 0;
+    var pos = 0;
+    $.each(sorted, function(key, value) {
+      $('<span>' + (++i) + '. ' + value + ' </span>').appendTo( "body" );
+      if (value === last) pos = i;
+    });
+
+    $('<div>Pos ' + pos + '</div>').appendTo( "body" );
+    $('<div>Tot ' + data.length + '</div>').appendTo( "body" );
+    $('<div>Ave ' + Math.round(100 * pos / data.length) + '%</div>').appendTo( "body" );
+
+    var offset = 5;
+    var start = pos - offset;
+    if (start<0) start = 0;
+    var end = pos;
+    var chase = sorted.slice(start,end);
+    console.log(chase);
+
+    $.each(chase, function(key, value) {
+      items.push( "<li id='" + key + "'>" + value + "</li>" );
+    });
+
+
+    $( "<ul/>", {
+      "class": "my-new-list",
+      html: items.join( "" )
+    }).appendTo( "body" );
+
+
+    // parse a spec and create a visualization view
+    function parse(spec) {
+      vg.parse.spec(j, function(chart) { chart({el:"#vis"}).update(); });
+    }
+
+
+
+    var j = {
+      "width": 1600,
+      "height": 600,
+      "padding": {"top": 10, "left": 30, "bottom": 30, "right": 10},
+      "data": [
+        {
+          "name": "table",
+          "values": values
+        }
+      ],
+      "signals": [
+        {
+          "name": "tooltip",
+          "init": {},
+          "streams": [
+            {"type": "rect:mouseover", "expr": "datum"},
+            {"type": "rect:mouseout", "expr": "{}"}
+          ]
+        }
+      ],
+      "predicates": [
+        {
+          "name": "tooltip", "type": "==",
+          "operands": [{"signal": "tooltip._id"}, {"arg": "id"}]
+        }
+      ],
+      "scales": [
+        {
+          "name": "x",
+          "type": "ordinal",
+          "range": "width",
+          "domain": {"data": "table", "field": "x"}
+        },
+        {
+          "name": "y",
+          "type": "linear",
+          "range": "height",
+          "domain": {"data": "table", "field": "y"},
+          "nice": true
+        }
+      ],
+      "axes": [
+        {"type": "x", "scale": "x"},
+        {"type": "y", "scale": "y"}
+      ],
+      "marks": [
+        {
+          "type": "rect",
+          "from": {"data": "table"},
+          "properties": {
+            "enter": {
+              "x": {"scale": "x", "field": "x"},
+              "width": {"scale": "x", "band": true, "offset": -1},
+              "y": {"scale": "y", "field": "y"},
+              "y2": {"scale": "y", "value": 0}
+            },
+            "update": {
+              "text": {"signal": "tooltip.y"},
+              "fill": {"value": "steelblue"}
+            },
+            "hover": {
+              "fill": {"value": "red"}
+            }
+          }
+        }
+      ]
+    }
+
+
+    parse(j);
+
+
+
+
+  });
+
+  </script>
+</body>
+</html>
