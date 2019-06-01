@@ -1,12 +1,43 @@
 
 
   class Body extends React.Component {
-    render() { return <section><h1>Brain Wallet</h1>
+    constructor(props) {
+      super(props)
+      this.state = { pw : '', hash : 'hash' }
+      this.handleSubmit = this.handleSubmit.bind(this)
+      this.handleChange = this.handleChange.bind(this)
+      //this.activateLasers = this.activateLasers.bind(this)
+
+    }
+
+
+    handleSubmit(e) {
+      e.preventDefault()
+    }
+
+    handleChange(e) {
+      this.setState({pw: event.target.value})
+      this.setState({hash : this.state.pw.toUpperCase() })
+      console.log(this.state.pw)
+    }
+
+    render() { 
+  
+      return <form onSubmit={this.handleSubmit}>
+        <h1>Brain Wallet</h1>
       <hr/>
-      <input placeholder="I am a teapot"/>
+      PW : 
+      <input type="text" placeholder="I am a teapot" 
+      value={this.state.pw}
+      onChange={this.handleChange} />
       <hr/>
-      <input placeholder="Sha2 Hash of a teapot!"/>
+      Hash : 
+      <input placeholder="Sha2 Hash of a teapot!"
+      value={this.state.hash}/>
       <hr/>
-      </section>
+      <button>
+      Compressed
+      </button>      
+      </form>
     }
   }
